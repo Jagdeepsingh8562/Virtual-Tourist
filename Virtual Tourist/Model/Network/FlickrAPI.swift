@@ -29,23 +29,54 @@ class FlickerAPI {
             return URL(string: stringValue)! }
     }
     
-    class func searchPhotos(lat: Double , long: Double, completion: @escaping (Bool, Error?) -> Void) {
+    class func getPhotosId(lat: Double , long: Double, completion: @escaping (Bool, Error?) -> Void) {
         let request = URLRequest(url: Endpoints.searchphotos(lat, long).url)
         let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
             guard let data = data else{
-                completion(false,error)
+                DispatchQueue.main.async {
+                completion(false, error)
+                }
                 return
         }
             do {
                 let responseObject = try JSONDecoder().decode(PhotosResponse.self, from: data)
                 Auth.photosInfo = responseObject.photos.photo
+                DispatchQueue.main.async {
                 completion(true, nil)
+                }
             } catch {
                 print(error)
+                DispatchQueue.main.async {
+                completion(false, error)
+                }
             }
-            
-    }
+        }
         task.resume()
-}
+    }
+    class func getPhoto(index: IndexPath ,completion: @escaping (_ image: UIImage) -> Void) {
+        let urls =  getPhotoURL(photoIdArray: Auth.photosInfo)
+            DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        let imgData = try Data(contentsOf: urls[index.item])
+                        guard let image = UIImage(data: imgData) else {
+                            return
+                        }
+                    DispatchQueue.main.async {
+                       completion(image)
+                    }
+                    } catch {
+                        print(error)
+                    }
+            }
+        }
 
+    
+   class func getPhotoURL(photoIdArray: [Photo]) -> [URL] {
+        var urls = [URL]()
+        for photo in photoIdArray {
+            urls.append(URL(string: "https://live.staticflickr.com/\(photo.server)/\(photo.id)_\(photo.secret).jpg")!)
+        }
+        return urls
+    }
+    
 }
