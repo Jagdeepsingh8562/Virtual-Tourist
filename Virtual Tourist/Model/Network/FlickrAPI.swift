@@ -53,12 +53,13 @@ class FlickerAPI {
         }
         task.resume()
     }
-    class func getPhoto(index: IndexPath ,completion: @escaping (_ image: UIImage) -> Void) {
+    class func getPhoto(index: IndexPath ,completion: @escaping (_ image: UIImage?) -> Void) {
         let urls =  getPhotoURL(photoIdArray: Auth.photosInfo)
             DispatchQueue.global(qos: .userInitiated).async {
                     do {
                         let imgData = try Data(contentsOf: urls[index.item])
                         guard let image = UIImage(data: imgData) else {
+                            completion(nil)
                             return
                         }
                     DispatchQueue.main.async {

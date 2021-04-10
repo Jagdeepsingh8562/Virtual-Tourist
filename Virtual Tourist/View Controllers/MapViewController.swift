@@ -7,58 +7,90 @@
 
 import UIKit
 import MapKit
+import CoreData
 
 class MapViewController: UIViewController , MKMapViewDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
-    var annotationArray = [CLLocationCoordinate2D]()
+    let appDelegate = UIApplication.shared.delegate as! AppDelegate
+    var dataController:DataController!
+    var pinArray = [Pin]()
     var selectedAnnotation = MKPointAnnotation()
-    var urls = [URL]()
+    var selectedpin:Pin!
+    var fetchedResultsController:NSFetchedResultsController<Pin>!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationController?.navigationBar.isHidden = true
+        dataController = appDelegate.dataController
+        setUpMapView()
+        setupFetchedRequest()
+    }
+    
+    fileprivate func setUpMapView() {
         mapView.delegate = self
         mapView.isUserInteractionEnabled = true
         let longTouch = UILongPressGestureRecognizer(target: self, action: #selector(addPin(_ :)))
         longTouch.minimumPressDuration = 0.5
         mapView.addGestureRecognizer(longTouch)
     }
+    
+    fileprivate func setupFetchedRequest() {
+        let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
+        fetchRequest.sortDescriptors = []
+        if let  result = try? dataController.viewContext.fetch(fetchRequest){
+            pinArray = result
+            
+            for pin in pinArray {
+                let cordinate = CLLocationCoordinate2DMake(pin.latitude, pin.longitude)
+                let annotation = MKPointAnnotation()
+                annotation.coordinate = cordinate
+                mapView.addAnnotation(annotation)
+            }
+        }
+    }
+    
     @objc func addPin(_ gestureReconizer: UILongPressGestureRecognizer) {
            if gestureReconizer.state == .began {
                let location = gestureReconizer.location(in: mapView)
                let coordinate = mapView.convert(location,toCoordinateFrom: mapView)
                let annotation = MKPointAnnotation()
                annotation.coordinate = coordinate
-            annotationArray.append(annotation.coordinate)
-               mapView.addAnnotation(annotation)
+            let pin = Pin(context: dataController.viewContext)
+            pin.latitude = selectedAnnotation.coordinate.latitude
+            pin.longitude = selectedAnnotation.coordinate.longitude
+            try? dataController.viewContext.save()
+            if dataController.viewContext.hasChanges {
+                print("pin added")
+            }
+            pinArray.insert(pin, at: 0)
+            mapView.addAnnotation(annotation)
            }
        }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         self.selectedAnnotation = view.annotation as! MKPointAnnotation
-        FlickerAPI.getPhotosId(lat: selectedAnnotation.coordinate.latitude, long: selectedAnnotation.coordinate.longitude, completion: handleGetPhotoId(success:error:))
+        let pin = Pin(context: dataController.viewContext)
+        pin.latitude = selectedAnnotation.coordinate.latitude
+        pin.longitude = selectedAnnotation.coordinate.longitude
+        try? dataController.viewContext.save()
         
-
+        performSegue(withIdentifier: "photoSegue", sender: nil)
         }
-    func handleGetPhotoId(success: Bool, error: Error?){
-        if success {
-            urls = FlickerAPI.getPhotoURL(photoIdArray: FlickerAPI.Auth.photosInfo)
-            performSegue(withIdentifier: "photoSegue", sender: nil)        }
-        else {
-            print(error!)
-        }
-    }
- 
-        
+    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let target = segue.destination as? PhotoViewController {
             target.selectedAnnotation = selectedAnnotation
-            target.urls = urls
+            target.dataController = dataController
+            
+            selectedpin.latitude = selectedAnnotation.coordinate.latitude
+            selectedpin.longitude = selectedAnnotation.coordinate.longitude
+            target.pin = selectedpin
         }
     }
-    
+}
    
     
 
-}
+
 
