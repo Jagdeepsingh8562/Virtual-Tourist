@@ -36,9 +36,9 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         super.viewDidLoad()
         collectionView.delegate = self
         collectionView.dataSource = self
+        collectionView.alwaysBounceVertical = true
         navigationController?.navigationBar.isHidden = false
         isLoading(true)
-       // FlickerAPI.getPhotosId(lat: pin.latitude, long: pin.longitude, completion: handleGetPhoto(success:error:))
         FlickerAPI.getPhotosId(lat: selectedAnnotation.coordinate.latitude, long: selectedAnnotation.coordinate.longitude, completion: handleGetPhoto(success:error:))
 
         setupFlowLayout()
@@ -48,19 +48,27 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     fileprivate func setupFetchedRequest() {
         let fetchRequest:NSFetchRequest<Collection> = Collection.fetchRequest()
         fetchRequest.sortDescriptors = []
-        let predicate = NSPredicate(format: "notebook == %@", pin)
+        let predicate = NSPredicate(format: "pin == %@", pin)
         fetchRequest.predicate = predicate
         if let  result = try? dataController.viewContext.fetch(fetchRequest){
             imagesData = result
+            ///faltu testing
+            if imagesData.count == 0 {
+                print("data is not comming") }
+            else {
+                print("data is \(imagesData.count)")
+            }
+            //delete krdena
             
             for imageData in imagesData {
                 guard let data = imageData.photo else {
                     return
                 }
                 let image = UIImage(data: data)
-                let cell = UICollectionViewCell() as! CustomCollectionCell
+                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: collectionView.indexPath(for: CustomCollectionCell())!) as! CustomCollectionCell
                 cell.imageView.image = image
             }
+            collectionView.reloadData()
         }
     }
     func setupFlowLayout() {
@@ -89,9 +97,19 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! CustomCollectionCell
         cell.imageView.image = nil
-        FlickerAPI.getPhoto(index: indexPath) { (image) in
-            cell.imageView.image = image
+        FlickerAPI.getPhotoss(index: indexPath.item) { (imgData) in
+            guard let imgData = imgData else {
+                return
+            }
+            let photo = Collection(context: self.dataController.viewContext)
+            photo.photo = imgData
+            try? self.dataController.viewContext.save()
+            self.imagesData.insert(photo, at: 0)
+            cell.imageView.image = UIImage(data: imgData)
         }
+        
+            
+        
         
         return cell
     }

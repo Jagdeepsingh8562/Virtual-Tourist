@@ -60,9 +60,7 @@ class MapViewController: UIViewController , MKMapViewDelegate {
             pin.latitude = selectedAnnotation.coordinate.latitude
             pin.longitude = selectedAnnotation.coordinate.longitude
             try? dataController.viewContext.save()
-            if dataController.viewContext.hasChanges {
-                print("pin added")
-            }
+            
             pinArray.insert(pin, at: 0)
             mapView.addAnnotation(annotation)
            }
@@ -73,6 +71,7 @@ class MapViewController: UIViewController , MKMapViewDelegate {
         let pin = Pin(context: dataController.viewContext)
         pin.latitude = selectedAnnotation.coordinate.latitude
         pin.longitude = selectedAnnotation.coordinate.longitude
+        selectedpin =  pin
         try? dataController.viewContext.save()
         
         performSegue(withIdentifier: "photoSegue", sender: nil)
@@ -82,9 +81,6 @@ class MapViewController: UIViewController , MKMapViewDelegate {
         if let target = segue.destination as? PhotoViewController {
             target.selectedAnnotation = selectedAnnotation
             target.dataController = dataController
-            
-            selectedpin.latitude = selectedAnnotation.coordinate.latitude
-            selectedpin.longitude = selectedAnnotation.coordinate.longitude
             target.pin = selectedpin
         }
     }

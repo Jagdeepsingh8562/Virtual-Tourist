@@ -70,6 +70,20 @@ class FlickerAPI {
                     }
             }
         }
+    class func getPhotoss(index: Int ,completion: @escaping (_ imageData: Data?) -> Void) {
+        let urls =  getPhotoURL(photoIdArray: Auth.photosInfo)
+            DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        let imgData = try Data(contentsOf: urls[index])
+                        
+                    DispatchQueue.main.async {
+                       completion(imgData)
+                    }
+                    } catch {
+                        print(error)
+                    }
+            }
+        }
 
     
    class func getPhotoURL(photoIdArray: [Photo]) -> [URL] {
