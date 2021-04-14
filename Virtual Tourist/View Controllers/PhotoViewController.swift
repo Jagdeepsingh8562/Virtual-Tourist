@@ -19,15 +19,20 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     var pin: Pin!
     var selectedAnnotation = MKPointAnnotation()
     var urls = [URL]()
-    var imagesData =  [Collection]()
+    var imagesDataArray =  [Collection]()
+    var imagesArrayHasData:Bool = false
+    
+    
     func isLoading(_ a :Bool) {
         if a {
             activityView.startAnimating()
             newCollectionButton.isEnabled = false
+            collectionView.isUserInteractionEnabled = false
         }
         else {
             activityView.stopAnimating()
             newCollectionButton.isEnabled = true
+            collectionView.isUserInteractionEnabled = true
             collectionView.reloadData()
         }
     }
@@ -45,31 +50,32 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         setupFetchedRequest()
        
     }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            try? dataController.viewContext.save()
+        }
+    
     fileprivate func setupFetchedRequest() {
         let fetchRequest:NSFetchRequest<Collection> = Collection.fetchRequest()
         fetchRequest.sortDescriptors = []
         let predicate = NSPredicate(format: "pin == %@", pin)
         fetchRequest.predicate = predicate
         if let  result = try? dataController.viewContext.fetch(fetchRequest){
-            imagesData = result
-            ///faltu testing
-            if imagesData.count == 0 {
-                print("data is not comming") }
-            else {
-                print("data is \(imagesData.count)")
+            imagesDataArray = result
+            if !result.isEmpty {
+                print("result is not empty")
+                imagesArrayHasData = true
             }
-            //delete krdena
-            
-            for imageData in imagesData {
-                guard let data = imageData.photo else {
-                    return
-                }
-                let image = UIImage(data: data)
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: collectionView.indexPath(for: CustomCollectionCell())!) as! CustomCollectionCell
-                cell.imageView.image = image
+            ///faltu testing
+            if imagesDataArray.count == 0 {
+                print("data empty")
+            }
+            else {
+                print("data is \(imagesDataArray.count)")
             }
             collectionView.reloadData()
-        }
+       }
     }
     func setupFlowLayout() {
             let space:CGFloat = 2.0
@@ -96,18 +102,36 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! CustomCollectionCell
-        cell.imageView.image = nil
-        FlickerAPI.getPhotoss(index: indexPath.item) { (imgData) in
-            guard let imgData = imgData else {
+        cell.imageView.image = UIImage(named: "imagePlaceholder")
+        if imagesArrayHasData == false {
+        FlickerAPI.getPhoto(index: indexPath.item) { (image, urlString) in
+            guard let image = image else {
                 return
             }
+            
             let photo = Collection(context: self.dataController.viewContext)
-            photo.photo = imgData
+            photo.photo = image.pngData()
+            photo.pin = self.pin
+            self.imagesDataArray.append(photo)
+            
             try? self.dataController.viewContext.save()
-            self.imagesData.insert(photo, at: 0)
-            cell.imageView.image = UIImage(data: imgData)
+          
+            if indexPath.row == self.imagesDataArray.count - 1 {
+                self.imagesArrayHasData = true
+                collectionView.isUserInteractionEnabled = true
+            }
+            cell.imageView.image = image
+            
+            }
+            
+           
         }
-        
+        else {
+            let imageData = imagesDataArray[indexPath.item].photo
+            cell.imageView.image = UIImage(data: imageData!)
+            collectionView.isUserInteractionEnabled = true
+            print("core data loading")
+        }
             
         
         
@@ -115,15 +139,16 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     }
     
 }
+let imageCache = NSCache<AnyObject, AnyObject>()
 
 extension PhotoViewController: MKMapViewDelegate {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-//        let coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
-//        let selectedAnnotation = MKPointAnnotation()
-//        selectedAnnotation.coordinate = coordinate
+
+        setupFetchedRequest()
         mapView.addAnnotation(selectedAnnotation)
         mapView.showAnnotations([selectedAnnotation], animated: true)
+        mapView.isUserInteractionEnabled = false
         collectionView.reloadData()
     }
 }

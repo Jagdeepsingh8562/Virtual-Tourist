@@ -22,7 +22,7 @@ class FlickerAPI {
         
         var stringValue: String {
             switch self {
-            case .searchphotos(let lat, let long): return "https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=\(Auth.key)&lat=\(lat)&lon=\(long)&per_page=9&format=json&nojsoncallback=1"
+            case .searchphotos(let lat, let long): return "https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=\(Auth.key)&lat=\(lat)&lon=\(long)&per_page=12&format=json&nojsoncallback=1"
             }
         }
         var url: URL {
@@ -53,22 +53,33 @@ class FlickerAPI {
         }
         task.resume()
     }
-    class func getPhoto(index: IndexPath ,completion: @escaping (_ image: UIImage?) -> Void) {
+    class func getPhoto(index: Int ,completion: @escaping (_ image: UIImage?,String?) -> Void) {
         let urls =  getPhotoURL(photoIdArray: Auth.photosInfo)
+        let urlString = "\(urls[index])"
+        if let imageFromCache = imageCache.object(forKey: urlString as AnyObject) as? UIImage {
+            DispatchQueue.main.async {
+                completion(imageFromCache,urlString) }
+        } else {
             DispatchQueue.global(qos: .userInitiated).async {
                     do {
-                        let imgData = try Data(contentsOf: urls[index.item])
+                        let imgData = try Data(contentsOf: urls[index])
+                        
                         guard let image = UIImage(data: imgData) else {
-                            completion(nil)
+                            completion(nil,nil)
                             return
                         }
+                        
                     DispatchQueue.main.async {
-                       completion(image)
+                        let imageToCahce = image
+                        imageCache.setObject(imageToCahce, forKey: urlString as AnyObject)
+                       completion(imageToCahce, urlString)
                     }
                     } catch {
                         print(error)
                     }
             }
+            
+        }
         }
     class func getPhotoss(index: Int ,completion: @escaping (_ imageData: Data?) -> Void) {
         let urls =  getPhotoURL(photoIdArray: Auth.photosInfo)

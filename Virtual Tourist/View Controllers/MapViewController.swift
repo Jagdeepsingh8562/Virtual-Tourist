@@ -80,7 +80,7 @@ class MapViewController: UIViewController , MKMapViewDelegate {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if let target = segue.destination as? PhotoViewController {
             target.selectedAnnotation = selectedAnnotation
-            target.dataController = dataController
+            target.dataController = appDelegate.dataController
             target.pin = selectedpin
         }
     }

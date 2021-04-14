@@ -23,7 +23,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iu0-dP-ygs" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-933" y="91"/>
+            <point key="canvasLocation" x="-935" y="100"/>
         </scene>
         <!--Map View Controller-->
         <scene sceneID="tne-QT-ifu">
@@ -57,7 +57,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-201.44927536231884" y="100.44642857142857"/>
+            <point key="canvasLocation" x="-175" y="100"/>
         </scene>
         <!--Photo Album View-->
         <scene sceneID="qbE-w3-GLC">
@@ -152,7 +152,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="P2y-5w-lCM" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="527.536231884058" y="99.776785714285708"/>
+            <point key="canvasLocation" x="609" y="100"/>
         </scene>
     </scenes>
     <resources>
