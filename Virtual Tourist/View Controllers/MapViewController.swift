@@ -15,7 +15,7 @@ class MapViewController: UIViewController , MKMapViewDelegate {
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     var dataController:DataController!
     var pinArray = [Pin]()
-    var selectedAnnotation = MKPointAnnotation()
+    //var selectedAnnotation = MKPointAnnotation()
     var selectedpin:Pin!
     var fetchedResultsController:NSFetchedResultsController<Pin>!
     
@@ -57,32 +57,35 @@ class MapViewController: UIViewController , MKMapViewDelegate {
                let annotation = MKPointAnnotation()
                annotation.coordinate = coordinate
             let pin = Pin(context: dataController.viewContext)
-            pin.latitude = selectedAnnotation.coordinate.latitude
-            pin.longitude = selectedAnnotation.coordinate.longitude
+            pin.latitude = coordinate.latitude
+            pin.longitude = coordinate.longitude
             try? dataController.viewContext.save()
             
-            pinArray.insert(pin, at: 0)
+            pinArray.append(pin)
             mapView.addAnnotation(annotation)
            }
        }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        self.selectedAnnotation = view.annotation as! MKPointAnnotation
-        let pin = Pin(context: dataController.viewContext)
-        pin.latitude = selectedAnnotation.coordinate.latitude
-        pin.longitude = selectedAnnotation.coordinate.longitude
-        selectedpin =  pin
-        try? dataController.viewContext.save()
+      //  self.selectedAnnotation = view.annotation as! MKPointAnnotation
+        mapView.deselectAnnotation(view.annotation, animated: false)
         
-        performSegue(withIdentifier: "photoSegue", sender: nil)
+        let albumVC = self.storyboard?.instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
+        albumVC.pin = selectedPin(view: view)
+        albumVC.dataController = dataController
+        navigationController?.pushViewController(albumVC, animated: true)
+        
+      
         }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if let target = segue.destination as? PhotoViewController {
-            target.selectedAnnotation = selectedAnnotation
-            target.dataController = appDelegate.dataController
-            target.pin = selectedpin
+
+    private func selectedPin(view: MKAnnotationView) -> Pin {
+        var selectedPin: Pin!
+        for pin in pinArray {
+            if pin.latitude == view.annotation?.coordinate.latitude && pin.longitude == view.annotation?.coordinate.longitude {
+                selectedPin = pin
+            }
         }
+        return selectedPin
     }
 }
    

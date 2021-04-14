@@ -110,6 +110,9 @@
                                 </constraints>
                                 <fontDescription key="fontDescription" type="system" pointSize="18"/>
                                 <state key="normal" title="New Collection"/>
+                                <connections>
+                                    <action selector="newCollections:" destination="hKP-gj-Wj3" eventType="touchUpOutside" id="Lb8-Kk-B1O"/>
+                                </connections>
                             </button>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="eL4-kw-W8q">
                                 <rect key="frame" x="0.0" y="88" width="414" height="233"/>

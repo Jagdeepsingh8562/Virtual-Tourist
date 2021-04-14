@@ -17,7 +17,7 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
     var dataController: DataController!
     var pin: Pin!
-    var selectedAnnotation = MKPointAnnotation()
+   
     var urls = [URL]()
     var imagesDataArray =  [Collection]()
     var imagesArrayHasData:Bool = false
@@ -44,7 +44,7 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         collectionView.alwaysBounceVertical = true
         navigationController?.navigationBar.isHidden = false
         isLoading(true)
-        FlickerAPI.getPhotosId(lat: selectedAnnotation.coordinate.latitude, long: selectedAnnotation.coordinate.longitude, completion: handleGetPhoto(success:error:))
+        FlickerAPI.getPhotosId(lat: pin.latitude, long: pin.longitude, completion: handleGetPhoto(success:error:))
 
         setupFlowLayout()
         setupFetchedRequest()
@@ -103,7 +103,7 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! CustomCollectionCell
         cell.imageView.image = UIImage(named: "imagePlaceholder")
-        if imagesArrayHasData == false {
+        
         FlickerAPI.getPhoto(index: indexPath.item) { (image, urlString) in
             guard let image = image else {
                 return
@@ -112,33 +112,42 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
             let photo = Collection(context: self.dataController.viewContext)
             photo.photo = image.pngData()
             photo.pin = self.pin
-            self.imagesDataArray.append(photo)
             
+            print("if \(self.imagesDataArray.count)")
+
             try? self.dataController.viewContext.save()
           
             if indexPath.row == self.imagesDataArray.count - 1 {
+                self.imagesDataArray.append(photo)
                 self.imagesArrayHasData = true
                 collectionView.isUserInteractionEnabled = true
             }
             cell.imageView.image = image
             
-            }
-            
-           
         }
-        else {
-            let imageData = imagesDataArray[indexPath.item].photo
-            cell.imageView.image = UIImage(data: imageData!)
-            collectionView.isUserInteractionEnabled = true
-            print("core data loading")
-        }
-            
-        
-        
+//        else {
+//            print("else \(imagesDataArray.count)")
+//            let imageData = imagesDataArray[indexPath.item].photo
+//            cell.imageView.image = UIImage(data: imageData!)
+//            collectionView.isUserInteractionEnabled = true
+//            print("core data loading")
+//        }
         return cell
     }
-    
+    @IBAction func newCollections(_ sender: Any){
+        isLoading(true)
+        
+        for image in imagesDataArray {
+            dataController.viewContext.delete(image)
+            try? dataController.viewContext.save()
+        }
+        imageCache.removeAllObjects()
+        imagesDataArray = []
+        imagesArrayHasData = false
+        isLoading(false)
 }
+}
+
 let imageCache = NSCache<AnyObject, AnyObject>()
 
 extension PhotoViewController: MKMapViewDelegate {
@@ -146,8 +155,11 @@ extension PhotoViewController: MKMapViewDelegate {
         super.viewDidAppear(animated)
 
         setupFetchedRequest()
-        mapView.addAnnotation(selectedAnnotation)
-        mapView.showAnnotations([selectedAnnotation], animated: true)
+        let pinAnnotation = MKPointAnnotation()
+        pinAnnotation.coordinate.latitude = pin.latitude
+        pinAnnotation.coordinate.longitude = pin.longitude
+        mapView.addAnnotation(pinAnnotation)
+        mapView.showAnnotations([pinAnnotation], animated: true)
         mapView.isUserInteractionEnabled = false
         collectionView.reloadData()
     }

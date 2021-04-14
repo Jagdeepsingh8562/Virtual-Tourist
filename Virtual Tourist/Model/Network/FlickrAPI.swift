@@ -15,14 +15,17 @@ class FlickerAPI {
         static var lat: Double = 0.0
         static var long: Double = 0.0
         static var photosInfo = [Photo]()
+        static var pages:Int = 1
     }
     
     enum Endpoints {
         case searchphotos(Double, Double)
+        case searchphotostwo(Double, Double, Int)
         
         var stringValue: String {
             switch self {
             case .searchphotos(let lat, let long): return "https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=\(Auth.key)&lat=\(lat)&lon=\(long)&per_page=12&format=json&nojsoncallback=1"
+            case .searchphotostwo(let lat, let long,let pages): return "https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=\(Auth.key)&lat=\(lat)&lon=\(long)&per_page=\(pages)&format=json&nojsoncallback=1"
             }
         }
         var url: URL {
@@ -41,6 +44,36 @@ class FlickerAPI {
             do {
                 let responseObject = try JSONDecoder().decode(PhotosResponse.self, from: data)
                 Auth.photosInfo = responseObject.photos.photo
+                DispatchQueue.main.async {
+                completion(true, nil)
+                }
+            } catch {
+                print(error)
+                DispatchQueue.main.async {
+                completion(false, error)
+                }
+            }
+        }
+        task.resume()
+    }
+    class func getPhotosIdTwo(lat: Double , long: Double ,newCollection: Bool , completion: @escaping (Bool, Error?) -> Void) {
+        var request = URLRequest(url: Endpoints.searchphotos(lat, long).url)
+        if newCollection {
+            let pages = Int.random(in: 1...Auth.pages)
+            request = URLRequest(url: Endpoints.searchphotostwo(lat, long ,pages).url)
+        }
+        
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            guard let data = data else{
+                DispatchQueue.main.async {
+                completion(false, error)
+                }
+                return
+            }
+            do {
+                let responseObject = try JSONDecoder().decode(PhotosResponse.self, from: data)
+                Auth.photosInfo = responseObject.photos.photo
+                Auth.pages = responseObject.photos.pages
                 DispatchQueue.main.async {
                 completion(true, nil)
                 }
