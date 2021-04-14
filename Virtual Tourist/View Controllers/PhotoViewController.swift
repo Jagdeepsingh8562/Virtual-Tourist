@@ -95,7 +95,11 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         }
     }
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return urls.count
+        if imagesDataArray.count > 0 {
+          return  imagesDataArray.count
+        }
+        else {
+            return urls.count }
     }
     
 //
@@ -104,34 +108,29 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! CustomCollectionCell
         cell.imageView.image = UIImage(named: "imagePlaceholder")
         
+        if imagesDataArray.count > 0 {
+            cell.imageView.image = UIImage(data: imagesDataArray[indexPath.item].photo!)
+            collectionView.isUserInteractionEnabled = true
+        }
+        else {
         FlickerAPI.getPhoto(index: indexPath.item) { (image, urlString) in
             guard let image = image else {
                 return
             }
-            
+            cell.imageView.image = image
             let photo = Collection(context: self.dataController.viewContext)
             photo.photo = image.pngData()
             photo.pin = self.pin
-            
-            print("if \(self.imagesDataArray.count)")
 
             try? self.dataController.viewContext.save()
           
             if indexPath.row == self.imagesDataArray.count - 1 {
-                self.imagesDataArray.append(photo)
                 self.imagesArrayHasData = true
                 collectionView.isUserInteractionEnabled = true
             }
-            cell.imageView.image = image
+        }
             
         }
-//        else {
-//            print("else \(imagesDataArray.count)")
-//            let imageData = imagesDataArray[indexPath.item].photo
-//            cell.imageView.image = UIImage(data: imageData!)
-//            collectionView.isUserInteractionEnabled = true
-//            print("core data loading")
-//        }
         return cell
     }
     @IBAction func newCollections(_ sender: Any){
