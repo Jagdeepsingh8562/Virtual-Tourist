@@ -15,7 +15,6 @@ class FlickerAPI {
         static var lat: Double = 0.0
         static var long: Double = 0.0
         static var photosInfo = [Photo]()
-        static var pages:Int = 1
     }
     
     enum Endpoints {
@@ -59,7 +58,7 @@ class FlickerAPI {
     class func getPhotosIdTwo(lat: Double , long: Double ,newCollection: Bool , completion: @escaping (Bool, Error?) -> Void) {
         var request = URLRequest(url: Endpoints.searchphotos(lat, long).url)
         if newCollection {
-            let pages = Int.random(in: 1...Auth.pages)
+            let pages = Int.random(in: 1...35)
             request = URLRequest(url: Endpoints.searchphotostwo(lat, long ,pages).url)
         }
         
@@ -73,7 +72,6 @@ class FlickerAPI {
             do {
                 let responseObject = try JSONDecoder().decode(PhotosResponse.self, from: data)
                 Auth.photosInfo = responseObject.photos.photo
-                Auth.pages = responseObject.photos.pages
                 DispatchQueue.main.async {
                 completion(true, nil)
                 }

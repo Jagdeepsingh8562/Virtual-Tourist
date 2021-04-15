@@ -111,7 +111,7 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="18"/>
                                 <state key="normal" title="New Collection"/>
                                 <connections>
-                                    <action selector="newCollections:" destination="hKP-gj-Wj3" eventType="touchUpOutside" id="Lb8-Kk-B1O"/>
+                                    <action selector="newCollections:" destination="hKP-gj-Wj3" eventType="touchUpInside" id="LkH-tU-zPm"/>
                                 </connections>
                             </button>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="eL4-kw-W8q">

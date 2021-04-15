@@ -17,10 +17,11 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
     var dataController: DataController!
     var pin: Pin!
-   
     var urls = [URL]()
     var imagesDataArray =  [Collection]()
     var imagesArrayHasData:Bool = false
+    let label = UILabel()
+
     
     
     func isLoading(_ a :Bool) {
@@ -56,6 +57,7 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
             try? dataController.viewContext.save()
         }
     
+    
     fileprivate func setupFetchedRequest() {
         let fetchRequest:NSFetchRequest<Collection> = Collection.fetchRequest()
         fetchRequest.sortDescriptors = []
@@ -69,7 +71,12 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
             }
             ///faltu testing
             if imagesDataArray.count == 0 {
+                isLoading(false)
                 print("data empty")
+                newCollectionButton.isHidden = true
+                setupLabel()
+                
+                
             }
             else {
                 print("data is \(imagesDataArray.count)")
@@ -89,6 +96,7 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         isLoading(false)
         if success {
             urls = FlickerAPI.getPhotoURL(photoIdArray: FlickerAPI.Auth.photosInfo)
+            
         }
         else {
             print(error!)
@@ -133,18 +141,58 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         }
         return cell
     }
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if imagesDataArray.count == 0 {
+            downloadNewImages(false)
+            return
+        }
+
+        if imagesDataArray.count > indexPath.item {
+        let imageToDelete = imagesDataArray[indexPath.item]
+        dataController.viewContext.delete(imageToDelete)
+            try? dataController.viewContext.save()
+            imagesDataArray.remove(at: indexPath.item)
+                collectionView.reloadData()
+        }
+    }
+    
     @IBAction func newCollections(_ sender: Any){
         isLoading(true)
         
         for image in imagesDataArray {
             dataController.viewContext.delete(image)
-            try? dataController.viewContext.save()
+            
         }
+        try? dataController.viewContext.save()
         imageCache.removeAllObjects()
         imagesDataArray = []
+        urls = []
         imagesArrayHasData = false
+        downloadNewImages(true)
         isLoading(false)
-}
+        //collectionView.reloadData()
+        collectionView.isUserInteractionEnabled = true
+        
+    }
+    func downloadNewImages(_ newCollection: Bool) {
+        if newCollection {
+            FlickerAPI.getPhotosIdTwo(lat: pin.latitude, long: pin.longitude, newCollection: true, completion: handleGetPhoto(success:error:))
+        }
+        
+    }
+    private func setupLabel() {
+        view.addSubview(label)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        let bottomAnchor = label.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40)
+        let leadingAnchor = label.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor)
+        let trailingAnchor = label.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+        let heightAnchor = label.heightAnchor.constraint(equalToConstant: 40)
+        view.addConstraints([bottomAnchor, leadingAnchor, trailingAnchor, heightAnchor])
+        
+        label.text = "No images to display"
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 26)
+    }
 }
 
 let imageCache = NSCache<AnyObject, AnyObject>()

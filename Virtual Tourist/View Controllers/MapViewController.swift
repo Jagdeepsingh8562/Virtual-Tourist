@@ -21,10 +21,13 @@ class MapViewController: UIViewController , MKMapViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.navigationBar.isHidden = true
         dataController = appDelegate.dataController
         setUpMapView()
         setupFetchedRequest()
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        navigationController?.navigationBar.isHidden = true
     }
     
     fileprivate func setUpMapView() {
