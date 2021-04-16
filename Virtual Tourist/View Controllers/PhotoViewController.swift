@@ -163,7 +163,6 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         imagesDataArray = []
         urls = []
         downloadImages(newCollection: true)
-        //isLoading(false)
         collectionView.reloadData()
         collectionView.isUserInteractionEnabled = true
         
