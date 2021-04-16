@@ -14,31 +14,22 @@ class DataController {
     var viewContext:NSManagedObjectContext {
         return persistentContainer.viewContext
     }
-    var backgroundContext:NSManagedObjectContext!
     
     init(modelName: String) {
         persistentContainer = NSPersistentContainer(name: modelName)
     }
-//    func configureContexts() {
-//        backgroundContext = persistentContainer.newBackgroundContext()
-//        
-//        viewContext.automaticallyMergesChangesFromParent = true
-//        backgroundContext.automaticallyMergesChangesFromParent = true
-//        
-//        backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-//        viewContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump
-//    }
     func load(completion: (()-> Void )? = nil) {
         persistentContainer.loadPersistentStores { (storeDescripiton, error) in
             guard error == nil else{
                 fatalError(error!.localizedDescription)
             }
             self.autoSaveViewContext()
-           // self.configureContexts()
             completion?()
         }
         
     }
+    static let shared = DataController(modelName: "Virtual_Tourist")
+
 }
 
 extension DataController {

@@ -69,7 +69,6 @@ class MapViewController: UIViewController , MKMapViewDelegate {
        }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-      //  self.selectedAnnotation = view.annotation as! MKPointAnnotation
         mapView.deselectAnnotation(view.annotation, animated: false)
         
         let albumVC = self.storyboard?.instantiateViewController(withIdentifier: "PhotoViewController") as! PhotoViewController
