@@ -19,7 +19,6 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     var pin: Pin!
     var urls = [URL]()
     var imagesDataArray =  [Collection]()
-    var imagesArrayHasData:Bool = false
     let label = UILabel()
 
     
@@ -44,12 +43,17 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         collectionView.dataSource = self
         collectionView.alwaysBounceVertical = true
         navigationController?.navigationBar.isHidden = false
-        isLoading(true)
-        FlickerAPI.getPhotosId(lat: pin.latitude, long: pin.longitude, completion: handleGetPhoto(success:error:))
-
+        
         setupFlowLayout()
         setupFetchedRequest()
-       
+        if imagesDataArray.count < 0 || urls.count == 0{
+           // isLoading(true)
+            downloadNewImages(false)
+            if urls.count > 0 {
+                newCollectionButton.isHidden = true
+                setupLabel()
+            }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -65,22 +69,17 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         fetchRequest.predicate = predicate
         if let  result = try? dataController.viewContext.fetch(fetchRequest){
             imagesDataArray = result
-            if !result.isEmpty {
-                print("result is not empty")
-                imagesArrayHasData = true
-            }
+            
             ///faltu testing
             if imagesDataArray.count == 0 {
                 isLoading(false)
                 print("data empty")
-                newCollectionButton.isHidden = true
-                setupLabel()
-                
-                
+               
             }
             else {
                 print("data is \(imagesDataArray.count)")
             }
+           
             collectionView.reloadData()
        }
     }
@@ -96,6 +95,11 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         isLoading(false)
         if success {
             urls = FlickerAPI.getPhotoURL(photoIdArray: FlickerAPI.Auth.photosInfo)
+            if imagesDataArray.count == 0  && urls.count == 0 {
+                    newCollectionButton.isHidden = true
+                    setupLabel()
+                
+            }
             
         }
         else {
@@ -110,7 +114,6 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
             return urls.count }
     }
     
-//
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "cell", for: indexPath) as! CustomCollectionCell
@@ -129,31 +132,40 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
             let photo = Collection(context: self.dataController.viewContext)
             photo.photo = image.pngData()
             photo.pin = self.pin
-
+              
             try? self.dataController.viewContext.save()
           
             if indexPath.row == self.imagesDataArray.count - 1 {
-                self.imagesArrayHasData = true
                 collectionView.isUserInteractionEnabled = true
             }
+            collectionView.isUserInteractionEnabled = true
         }
             
         }
         return cell
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if imagesDataArray.count == 0 {
-            downloadNewImages(false)
-            return
-        }
+        
 
         if imagesDataArray.count > indexPath.item {
-        let imageToDelete = imagesDataArray[indexPath.item]
+        let imageToDelete = imagesDataArray[indexPath.row]
         dataController.viewContext.delete(imageToDelete)
-            try? dataController.viewContext.save()
             imagesDataArray.remove(at: indexPath.item)
-                collectionView.reloadData()
+            
+            try? dataController.viewContext.save()
+            
         }
+        if imagesDataArray.count == 0 {
+            if urls.count == 0  {
+                print("testt")
+                downloadNewImages(false)
+            }
+            print("didSelectDownloadingNewImages")
+            
+            return
+        }
+        
+        collectionView.reloadData()
     }
     
     @IBAction func newCollections(_ sender: Any){
@@ -161,23 +173,28 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         
         for image in imagesDataArray {
             dataController.viewContext.delete(image)
-            
+            try? dataController.viewContext.save()
         }
         try? dataController.viewContext.save()
         imageCache.removeAllObjects()
         imagesDataArray = []
         urls = []
-        imagesArrayHasData = false
         downloadNewImages(true)
-        isLoading(false)
-        //collectionView.reloadData()
+        //isLoading(false)
+        collectionView.reloadData()
         collectionView.isUserInteractionEnabled = true
         
     }
     func downloadNewImages(_ newCollection: Bool) {
-        if newCollection {
-            FlickerAPI.getPhotosIdTwo(lat: pin.latitude, long: pin.longitude, newCollection: true, completion: handleGetPhoto(success:error:))
-        }
+        isLoading(true)
+        FlickerAPI.getPhotosId(lat: pin.latitude, long: pin.longitude, newCollection: newCollection, completion: handleGetPhoto(success:error:))
+
+//        if newCollection {
+//            FlickerAPI.getPhotosIdTwo(lat: pin.latitude, long: pin.longitude, newCollection: true, completion: handleGetPhoto(success:error:))
+//        }
+//        else {
+//            FlickerAPI.getPhotosId(lat: pin.latitude, long: pin.longitude, completion: handleGetPhoto(success:error:))
+//        }
         
     }
     private func setupLabel() {
@@ -200,14 +217,14 @@ let imageCache = NSCache<AnyObject, AnyObject>()
 extension PhotoViewController: MKMapViewDelegate {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-
-        setupFetchedRequest()
+        
         let pinAnnotation = MKPointAnnotation()
         pinAnnotation.coordinate.latitude = pin.latitude
         pinAnnotation.coordinate.longitude = pin.longitude
         mapView.addAnnotation(pinAnnotation)
         mapView.showAnnotations([pinAnnotation], animated: true)
         mapView.isUserInteractionEnabled = false
+        collectionView.allowsMultipleSelection = false
         collectionView.reloadData()
     }
 }

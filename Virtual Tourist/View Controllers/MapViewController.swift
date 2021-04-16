@@ -15,7 +15,6 @@ class MapViewController: UIViewController , MKMapViewDelegate {
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     var dataController:DataController!
     var pinArray = [Pin]()
-    //var selectedAnnotation = MKPointAnnotation()
     var selectedpin:Pin!
     var fetchedResultsController:NSFetchedResultsController<Pin>!
     
