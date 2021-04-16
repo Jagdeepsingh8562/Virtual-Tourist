@@ -46,9 +46,8 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         
         setupFlowLayout()
         setupFetchedRequest()
-        if imagesDataArray.count < 0 || urls.count == 0{
-           // isLoading(true)
-            downloadNewImages(false)
+        if imagesDataArray.count == 0{
+            downloadImages(newCollection: false)
             if urls.count > 0 {
                 newCollectionButton.isHidden = true
                 setupLabel()
@@ -69,16 +68,6 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         fetchRequest.predicate = predicate
         if let  result = try? dataController.viewContext.fetch(fetchRequest){
             imagesDataArray = result
-            
-            ///faltu testing
-            if imagesDataArray.count == 0 {
-                isLoading(false)
-                print("data empty")
-               
-            }
-            else {
-                print("data is \(imagesDataArray.count)")
-            }
            
             collectionView.reloadData()
        }
@@ -132,6 +121,7 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
             let photo = Collection(context: self.dataController.viewContext)
             photo.photo = image.pngData()
             photo.pin = self.pin
+            self.imagesDataArray.append(photo)
               
             try? self.dataController.viewContext.save()
           
@@ -146,25 +136,18 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
     }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
-
-        if imagesDataArray.count > indexPath.item {
-        let imageToDelete = imagesDataArray[indexPath.row]
-        dataController.viewContext.delete(imageToDelete)
-            imagesDataArray.remove(at: indexPath.item)
-            
-            try? dataController.viewContext.save()
-            
-        }
-        if imagesDataArray.count == 0 {
-            if urls.count == 0  {
-                print("testt")
-                downloadNewImages(false)
-            }
-            print("didSelectDownloadingNewImages")
-            
-            return
+        if urls.count > indexPath.item {
+            urls.remove(at: indexPath.item)
         }
         
+        let imageToDelete = imagesDataArray[indexPath.row]
+        dataController.viewContext.delete(imageToDelete)
+        try? dataController.viewContext.save()
+        imagesDataArray.remove(at: indexPath.item)
+        if imagesDataArray.count == 0 {
+            downloadImages(newCollection: false)
+            return
+        }
         collectionView.reloadData()
     }
     
@@ -179,22 +162,15 @@ class PhotoViewController: UIViewController, UICollectionViewDelegate , UICollec
         imageCache.removeAllObjects()
         imagesDataArray = []
         urls = []
-        downloadNewImages(true)
+        downloadImages(newCollection: true)
         //isLoading(false)
         collectionView.reloadData()
         collectionView.isUserInteractionEnabled = true
         
     }
-    func downloadNewImages(_ newCollection: Bool) {
+    func downloadImages(newCollection: Bool) {
         isLoading(true)
         FlickerAPI.getPhotosId(lat: pin.latitude, long: pin.longitude, newCollection: newCollection, completion: handleGetPhoto(success:error:))
-
-//        if newCollection {
-//            FlickerAPI.getPhotosIdTwo(lat: pin.latitude, long: pin.longitude, newCollection: true, completion: handleGetPhoto(success:error:))
-//        }
-//        else {
-//            FlickerAPI.getPhotosId(lat: pin.latitude, long: pin.longitude, completion: handleGetPhoto(success:error:))
-//        }
         
     }
     private func setupLabel() {
