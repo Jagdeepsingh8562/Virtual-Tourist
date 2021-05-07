@@ -51,7 +51,6 @@ class MapViewController: UIViewController , MKMapViewDelegate {
             }
         }
     }
-    
     @objc func addPin(_ gestureReconizer: UILongPressGestureRecognizer) {
            if gestureReconizer.state == .began {
                let location = gestureReconizer.location(in: mapView)
@@ -75,8 +74,6 @@ class MapViewController: UIViewController , MKMapViewDelegate {
         albumVC.pin = selectedPin(view: view)
         albumVC.dataController = dataController
         navigationController?.pushViewController(albumVC, animated: true)
-        
-      
         }
 
     private func selectedPin(view: MKAnnotationView) -> Pin {
