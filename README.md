@@ -13,7 +13,7 @@ Virtual Tourist lets a user to mark locations on a map and clicking on an annota
 2. Editing an album for a particular pin by deleting an image or fetching new images.
 
 ## Screenshots
-<img src = "Screenshots/screenshot_1.PNG" width = "180">  <img src = "Screenshots/screenshot_2.PNG" width = "180">
+<img src = "Screenshots/screenshot_1.png" width = "180"> &nbsp; &nbsp; <img src = "Screenshots/screenshot_2.png" width = "180">
 
 ## How to build/compile
 1. Open "Virtual Tourist.xcodeproj" file.
